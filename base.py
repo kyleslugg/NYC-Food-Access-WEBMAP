@@ -259,10 +259,11 @@ def divide_features(feature_df, n, geometry_col, id_col):
     return ids_with_locations
 
 
-def get_isochrones(points):
+def get_isochrones_with_cache(points, layer_cache):
     '''TODO: Docstring
 
     Returns dictionary containing an index and a list of GeoJSON Features'''
+
     points_data = gpd.read_file(json.dumps(points))
 
     segments = divide_features(points_data, 5, 'geometry', 'id')
@@ -280,8 +281,8 @@ def get_isochrones(points):
         'Content-Type': 'application/json; charset=utf-8'
     }
 
-    isochrone_features = []
-    index = []
+    isochrone_features = layer_cache['GeoJSON']['features']
+    index = layer_cache['index']
 
     segment_number = 1
     for id_string, locations in segments.items():
@@ -299,6 +300,7 @@ def get_isochrones(points):
                 i += 1
                 isochrone_features.append(feature)
 
+            save_cache(layer_cache, layer_cache['GeoJSON']['name'])
             print(f"Fetched New Isochrones: Segment {segment_number} of {len(segments.keys())}")
             segment_number +=1
 
@@ -314,30 +316,31 @@ def get_isochrones(points):
                 i += 1
                 isochrone_features.append(feature)
 
+            save_cache(layer_cache, layer_cache['GeoJSON']['name'])
             print(f"Fetched New Isochrones: Segment {segment_number} of {len(segments.keys())}")
             segment_number +=1
 
     return {'index': index, 'features': isochrone_features}
 
 
-def get_isochrones_with_cache(point_feature_collection):
+def refresh_isochrones(point_feature_collection, layer_name):
     '''TODO: Docstring
 
     point_feature_collection: GeoJSON,
     returns GeoJSON of '''
 
-    iso_cache = CACHE_VAR.setdefault('isochrones',{'index':[],
-                                                   'GeoJSON':{'type': 'FeatureCollection',
-                                                             'name': 'isochrones',
-                                                             'features':[]
-                                                             }
-                                                  })
+    layer_cache = CACHE_VAR.setdefault(f'{layer_name}_isochrones', {'index':[],'GeoJSON':{
+        'type': 'FeatureCollection',
+        'name': f'{layer_name}_isochrones',
+        'features':[]
+        }
+        })
 
     features_in_cache = []
     features_to_fetch = []
 
     for feature in point_feature_collection['features']:
-        if feature['properties']['id'] in iso_cache['index']:
+        if str(feature['properties']['id']) in layer_cache['index']:
             features_in_cache.append(feature)
         else:
             features_to_fetch.append(feature)
@@ -345,19 +348,19 @@ def get_isochrones_with_cache(point_feature_collection):
     print(f'''Using {len(features_in_cache)} cached isochrones;
                 Fetching {len(features_to_fetch)} new isochrones''')
 
-    new_isochrones = get_isochrones({'type': 'FeatureCollection',
+    new_isochrones = get_isochrones_with_cache({'type': 'FeatureCollection',
                                     'name': 'temp',
-                                    'features': features_to_fetch})
+                                    'features': features_to_fetch}, layer_cache)
 
-    iso_cache['index'] += new_isochrones['index']
-    iso_cache['GeoJSON']['features'] += iso_cache['features']
+    layer_cache['index'] += new_isochrones['index']
+    layer_cache['GeoJSON']['features'] += new_isochrones['features']
 
-    save_cache(iso_cache, 'isochrones')
+    save_cache(layer_cache, f'{layer_name}_isochrones')
 
     with open('Geospatial_Data/isochrones.geojson', 'w') as file:
-        json.dump(geographic_elements, file, indent=2)
+        json.dump(layer_cache['GeoJSON'], file, indent=2)
 
-    return iso_cache['GeoJSON']
+    return layer_cache['GeoJSON']
 
 
 if __name__ == '__main__':
@@ -368,4 +371,4 @@ if __name__ == '__main__':
     markets = get_markets()
 
     #Fetch and Categorize Isochrones
-    isochrones = get_isochrones_with_cache(markets)
+    isochrones = refresh_isochrones(markets, 'markets')
