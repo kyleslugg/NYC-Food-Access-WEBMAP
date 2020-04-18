@@ -523,8 +523,7 @@ def get_acs_data():
 
     return tracts_table
 
-
-if __name__ == '__main__':
+def main_flow():
     #Initialize Cache
     CACHE_VAR = open_cache(CACHE_PATH)
 
@@ -536,3 +535,7 @@ if __name__ == '__main__':
 
     #Fetch and Join Tract Data
     get_acs_data()
+
+
+if __name__ == '__main__':
+    main_flow()
