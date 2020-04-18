@@ -268,7 +268,6 @@ def make_markets_table(geodataframe):
     except:
         pass
 
-    #Generate Schema
     create_statement = '''CREATE TABLE IF NOT EXISTS "markets"(
     "feat_id" INTEGER PRIMARY KEY,
     "name" TEXT,
@@ -442,6 +441,89 @@ def refresh_isochrones(point_feature_collection, layer_name):
     return layer_cache['GeoJSON']
 
 
+def make_tracts_table(geodataframe):
+    '''TODO: Docstring'''
+
+    conn = sqlite3.connect('Geospatial_Data/map_data.sqlite')
+    cur = conn.cursor()
+
+    dataframe = geodataframe.drop(columns=['geometry'])
+    value_cols = [column for column in dataframe.columns.tolist() if column != 'GEOID']
+
+    schema = '''"geoid" TEXT PRIMARY KEY UNIQUE'''
+
+    for column in value_cols:
+        schema += f''',
+        "{str(column).lower()}" TEXT NOT NULL'''
+
+    drop_statement = '''DROP TABLE IF EXISTS "tracts";'''
+    create_statement = f'''CREATE TABLE IF NOT EXISTS "tracts"(
+    {schema})'''
+
+    cur.execute(drop_statement)
+    cur.execute(create_statement)
+
+    def add_to_table(row):
+        add_statement = f'''INSERT INTO tracts
+        VALUES (?{', ?'*(len(row.values)-1)})'''
+        values = [row['GEOID']]+row[value_cols].values.tolist()
+        conn.execute(add_statement, values)
+
+    dataframe.apply(lambda row: add_to_table(row), axis=1)
+
+    conn.commit()
+    conn.close()
+
+
+
+def get_acs_data():
+
+    BASE_URL = 'https://api.census.gov/data/2018/acs/acs5'
+    county_fips = ['081', '061', '085', '005', '047']
+    state_fips = '36'
+    variables = {'total_pop':'B01003_001E',
+                 'white_pop':'B02001_002E',
+                 'black_pop':'B02001_003E',
+                 'aian_pop':'B02001_004E',
+                 'asian_pop':'B02001_005E',
+                 'nhpi_pop': 'B02001_006E',
+                 'other_pop':'B02001_007E',
+                 'two_or_more_pop':'B02001_008E',
+                 'median_age':'B01002_001E',
+                 'median_hh_income':'B19049_001E'
+                }
+
+    tracts_table = gpd.read_file('Geospatial_Data/NYC_Tracts_Clipped.geojson')
+
+    for varname, variable in variables.items():
+        variable_table = pd.DataFrame({f'{variable}':'Placeholder',
+                                       'state':'00',
+                                       'county':'000',
+                                       'tract':'000000'}, index=[0])
+        for county in county_fips:
+            params = {'get':variable,
+                      'for':'tract:*',
+                      'in':[f"state:{state_fips}",f"county:{county}"],
+                      'key':CENSUS_KEY
+                   }
+
+            results = call_API_with_cache(url=BASE_URL,
+                                          params=params,
+                                          cache_name='census')
+            variable_table = variable_table.append(pd.DataFrame(results, columns=variable_table.columns).iloc[1:,0:], ignore_index=True)
+
+        tracts_table = tracts_table.merge(variable_table,
+                                          left_on=['STATEFP', 'COUNTYFP', 'TRACTCE'],
+                                          right_on=['state', 'county', 'tract'],
+                                          how='left').drop(columns=['state', 'county', 'tract'])
+
+    tracts_table.to_file('Geospatial_Data/Tracts_with_Data.geojson', driver='GeoJSON')
+
+    make_tracts_table(tracts_table)
+
+    return tracts_table
+
+
 if __name__ == '__main__':
     #Initialize Cache
     CACHE_VAR = open_cache(CACHE_PATH)
@@ -451,3 +533,6 @@ if __name__ == '__main__':
 
     #Fetch and Categorize Isochrones
     isochrones = refresh_isochrones(markets, 'markets')
+
+    #Fetch and Join Tract Data
+    get_acs_data()
