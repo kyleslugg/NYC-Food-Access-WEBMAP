@@ -4,21 +4,13 @@ import secrets
 import pandas as pd
 import geopandas as gpd
 import numpy as np
-import folium
-from folium.plugins import MarkerCluster
-from openrouteservice import client
-import shapely
 
 import requests
 import json
 import time
 import sqlite3
-from datetime import date
 import math
 
-
-#NOTE: Requires libspatialindex_c and rtree for geoanalysis. brew install
-#spatialindex, pip3 install rtree
 
 #Global Vars
 CENSUS_KEY = secrets.CENSUS_API_KEY
@@ -236,17 +228,17 @@ def get_market_data(refresh=False):
                                        'properties':propdict})
 
     markets_data = gpd.read_file(json.dumps(geographic_elements))
-    markets_data['wkb_geometry'] = markets_data['geometry'].apply(lambda item: item.wkb)
     markets_data['addr'] = markets_data.apply(lambda row: f"{row['addr:housenumber']} {row['addr:street']}, {row['addr:city']}", axis=1)
     markets_data['addr'] = markets_data['addr'].apply(lambda x: None if (str(x).find('None') != -1) else x)
 
     census_tracts = gpd.read_file('Geospatial_Data/NYC_Tracts.geojson').to_crs('epsg:4326')
-    fields_to_keep = ['id', 'name', 'alt_name', 'addr', 'shop', 'opening_hours', 'phone', 'GEOID','wkb_geometry']
 
     markets_data_with_tract = gpd.sjoin(markets_data, census_tracts, how='left', op='intersects')
-    markets_data_trimmed = markets_data_with_tract[fields_to_keep]
 
-    make_markets_table(markets_data_trimmed)
+    markets_data_with_tract.to_file('Geospatial_Data/markets.geojson', driver='GeoJSON')
+
+    fields_to_keep = ['id', 'name', 'alt_name', 'addr', 'shop', 'opening_hours', 'phone', 'GEOID']
+    make_markets_table(markets_data_with_tract[fields_to_keep])
 
     return geographic_elements
 
@@ -254,19 +246,10 @@ def get_market_data(refresh=False):
 
 
 def make_markets_table(geodataframe):
-    '''TODO: Docstring
-    geom_column must be in wkb form'''
+    '''TODO: Docstring'''
 
     conn = sqlite3.connect('Geospatial_Data/map_data.sqlite')
-    conn.enable_load_extension(True)
-    conn.load_extension("mod_spatialite")
-
     cur = conn.cursor()
-
-    try:
-        conn.execute("SELECT InitSpatialMetaData(1);")
-    except:
-        pass
 
     create_statement = '''CREATE TABLE IF NOT EXISTS "markets"(
     "feat_id" INTEGER PRIMARY KEY,
@@ -287,27 +270,10 @@ def make_markets_table(geodataframe):
     def add_row(row):
         add_statement = '''INSERT INTO markets
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
-        values = row.values.tolist()[:8]
+        values = row.values.tolist()
         conn.execute(add_statement, values)
 
     geodataframe.apply(lambda row: add_row(row), axis=1)
-
-    try:
-        conn.execute(f"""
-            SELECT AddGeometryColumn("markets", 'wkb_geometry', 4326, 'POINT', 2);
-            """)
-    except:
-        pass
-
-    geometry_tuples = []
-    geodataframe.apply(lambda row: geometry_tuples.append((row['wkb_geometry'], row['id'])), axis=1)
-
-    conn.executemany(
-    f"""
-    UPDATE markets
-    SET wkb_geometry=GeomFromWKB(?, 4326)
-    WHERE markets.feat_id = ?
-    """, (tuple(geometry_tuples)))
     conn.commit()
     conn.close()
 
@@ -517,13 +483,21 @@ def get_acs_data():
                                           right_on=['state', 'county', 'tract'],
                                           how='left').drop(columns=['state', 'county', 'tract'])
 
+    tracts_table = tracts_table[tracts_table['B01003_001E'].astype(int) != 0]
+
+    tracts_table['B01002_001E'] = tracts_table['B01002_001E'].apply(lambda item: np.nan if float(item)<0 else item).astype(str)
+
+    tracts_table['B19049_001E'] = tracts_table['B19049_001E'].apply(lambda item: np.nan if float(item)<0 else item).astype(str)
+
+    tracts_table['pct_nonwhite'] = tracts_table.apply(lambda row: 1-(int(row['B02001_002E'])/int(row['B01003_001E'])), axis=1)
+
     tracts_table.to_file('Geospatial_Data/Tracts_with_Data.geojson', driver='GeoJSON')
 
     make_tracts_table(tracts_table)
 
     return tracts_table
 
-def main_flow():
+if __name__ == '__main__':
     #Initialize Cache
     CACHE_VAR = open_cache(CACHE_PATH)
 
@@ -537,5 +511,15 @@ def main_flow():
     get_acs_data()
 
 
-if __name__ == '__main__':
-    main_flow()
+if __name__ == 'get_data':
+    #Initialize Cache
+    CACHE_VAR = open_cache(CACHE_PATH)
+
+    #Fetch Markets
+    markets = get_market_data()
+
+    #Fetch and Categorize Isochrones
+    isochrones = refresh_isochrones(markets, 'markets')
+
+    #Fetch and Join Tract Data
+    get_acs_data()
