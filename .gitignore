@@ -3,3 +3,7 @@ __pycache__
 .ipynb_checkpoints
 map_data.sqlite
 Cache.json
+markets.html
+tracts.html
+isochrones.html
+setup.py

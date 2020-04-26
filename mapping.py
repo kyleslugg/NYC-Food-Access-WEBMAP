@@ -2,7 +2,7 @@ import folium
 from folium.plugins import MarkerCluster
 import geopandas as gpd
 import numpy as np
-from flask import Flask
+from flask import Flask, render_template
 
 def get_data():
     import get_data
@@ -22,7 +22,7 @@ def make_isochrone_layers(isochrone_data):
 
 def make_market_map(market_data, isochrone_data):
 
-    m = folium.Map(location=[40.728783, -73.992320],
+    m = folium.Map(width=730, height=500, location=[40.728783, -73.992320],
                   tiles = basemap,
                   zoom_start=11)
 
@@ -111,7 +111,7 @@ def make_tract_map(market_data, tract_data):
     return m
 
 
-if __name__ == '__main__':
+def prompt_data_refresh():
     while True:
         response = input("Obtain fresh data? Y/N")
         if response.lower() == 'y':
@@ -122,9 +122,20 @@ if __name__ == '__main__':
         else:
             print("Please enter 'Y' or 'N'")
 
+    pass
+
+
+if __name__ == '__main__':
+    prompt_data_refresh()
+
     basemap = 'cartodbpositron'
 
-    markets = gpd.read_file('Geospatial_Data/markets.geojson')
+    try:
+        markets = gpd.read_file('Geospatial_Data/markets.geojson')
+    except:
+        print("No data found! Refreshing data -- please wait.")
+        get_data()
+        markets = gpd.read_file('Geospatial_Data/markets.geojson')
 
     isochrones = gpd.read_file('Geospatial_Data/isochrones.geojson')
     isochrone_data = make_isochrone_layers(isochrones)
@@ -132,3 +143,15 @@ if __name__ == '__main__':
     tracts = gpd.read_file('Geospatial_Data/Tracts_with_Data.geojson')
     tracts[tracts.columns[12:22]] = tracts[tracts.columns[12:22]].astype(float)
     tracts[tracts.columns[22]] = tracts[tracts.columns[22]]*100
+
+    make_tract_map(markets, tracts).save('static/tracts.html')
+    make_market_map(markets, isochrone_data).save('static/markets.html')
+
+    #Flask starts here
+    app = Flask(__name__)
+
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    app.run(debug=False)
