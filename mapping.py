@@ -22,7 +22,7 @@ def make_isochrone_layers(isochrone_data):
 
 def make_market_map(market_data, isochrone_data):
 
-    m = folium.Map(width=730, height=500, location=[40.728783, -73.992320],
+    m = folium.Map(location=[40.728783, -73.992320],
                   tiles = basemap,
                   zoom_start=11)
 
