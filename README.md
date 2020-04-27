@@ -17,6 +17,7 @@ The following packages must be installed to pull, process, and map these data:
 - geopandas
 - folium
 - flask
+- requests
 
 Keys to the following APIs should be supplied in a document entitled
 "secrets.py," using the included "secrets_template.py" template.

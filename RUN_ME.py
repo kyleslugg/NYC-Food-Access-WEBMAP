@@ -68,7 +68,7 @@ def make_market_map(market_data, isochrone_data):
                                      'color': 'black'
                                     }))
 
-    folium.LayerControl().add_to(m)
+    folium.LayerControl(autoZIndex=True, hideSingleBase="true").add_to(m)
 
     return m
 
@@ -106,7 +106,7 @@ def make_tract_map(market_data, tract_data):
                                fill_color='Oranges', show=False, legend_name='Median Age').add_to(m)
 
 
-    folium.LayerControl().add_to(m)
+    folium.LayerControl(autoZIndex=True, hideSingleBase="true").add_to(m)
 
     return m
 
