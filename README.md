@@ -8,7 +8,11 @@ This repository maps access to fresh food across New York City, in relation to
 prominent markers of socioeconomic (dis)advantage at the Census Tract level,
 using data from OpenStreetMap, OpenRouteService, and U.S. Census Bureau
 American Community Survey 5-Year Estimates of the 2014--2018 vintage.
-Information on process can be found in Jupyter notebooks in the "Notebooks" folder.
+Information on process can be found in Jupyter notebooks in the "Notebooks"
+folder.
+
+_A more streamlined, static, web-based version of this project is available
+under the "nyc-food-access-web" folder, as well as at kyleslugg.com/food-access_
 
 The following packages must be installed to pull, process, and map these data:
 

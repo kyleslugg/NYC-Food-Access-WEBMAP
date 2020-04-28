@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="static/favicon.ico">
+
+  <title>NYC Food Access</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+  <!-- Custom styles for this template -->
+  <link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900" rel="stylesheet">
+  <link href="css/blog.css" rel="stylesheet">
+
+
+</head>
+
+<body style="display: inline; text-align: left; background-color: rgb(243, 255, 238);">
+
+  <main role="main" class="container">
+    <div class="blog-post" style="max-width: 810px; position:relative; margin:
+    auto; margin-top: 50px; margin-bottom: 50px">
+      <h2 class="blog-post-title" style="position: relative; text-align:
+          center; max-width: 810px">Re-examining Food Access in New York City
+        <hr>
+      </h2>
+      <div style="max-width: 800px;">
+        <p class="blog-post-meta">Kyle Slugg; Updated April 27, 2020</p>
+
+        <p>Uneven access to fresh foods is a perennial issue for many
+          American. Wealthy urban areas frequently feature an
+          abundance of markets and specialty stores offering a range of
+          nutritious options, while automobile-oriented suburban environments
+          offer those who are able to drive ready access to supermarkets. By
+          contrast, less-well-off urban areas (and rural areas where low
+          population density discourages services development) have traditionally been neglected
+          by chain supermarkets and specialty stores, leaving residents to find
+          sustenance from more convenient but less nutritious sources.</p>
+
+        <p>New York City is no exception: anecdotally, fresh
+          food retailers are far sparser in areas such as outer Brooklyn,
+          eastern Queens, and the Bronx than in much of Manhattan or in
+          wealthier areas of the outer boroughs. This is doubly true of the
+          corridors near transit stations that are frequented by commuters; in
+          these areas, quick-service delis and bodegas offer convenience that few
+          full-service groceries can match.</p>
+
+        <p>However, the empirical study of "food deserts" (which are defined by
+          a range of metrics, including a lack of access to fresh food combined
+          with some element of socioeconomic disadvantage) in
+          urban areas is made difficult by the nature of the urban food retail
+          landscape. New Yorkers purchase fresh foods not only from supermarkets -- the only sources
+          of fresh food included in many "food desert" metrics, including those
+          in the
+          USDA's Food Access Research Atlas -- but also from small
+          produce markets and local grocery chains that offer a lifeline in
+          areas where real estate is too expensive or demand is too low to
+          support a large-footprint store. What is more, distance-based
+          metrics of food access fail to capture the time costs associated with
+          seeking fresh foods over prepared foods in areas where a glut of the
+          latter are readily available: what does it matter that a produce
+          market is 1/2 mile away if a stretch of bodegas and take-out
+          establishments greet hungry and time-crunched commuters as they step
+          off the train?</p>
+
+        <h3>Walking Time to Fresh-Food Retailers</h3>
+        <!--Markets map-->
+        <div id="map-container" class="map-container" style="height: 548px;
+      float: center;">
+          <iframe src="./map.html" frameborder="0" style="border:0;" width=800 height=548 float="center"></iframe>
+        </div>
+        <p><br>In order to paint a more complete and realistic picture of New
+          Yorkers' food options, I visualize supermarkets, grocery stores, and
+          greengrocers that are included in OpenStreetMap's database of places.
+          Because this source is community-generated, it is able to account for
+          smaller fresh-food providers than those listed in, for example, New
+          York State's database of supermarkets, while also filtering out
+          establishments such as bodegas that are nominally food retailers but
+          which do not offer a full complement of grocery options. I then
+          create 5-, 7-, and 10-minute walking isochrones around each of these
+          stores, representing areas that have relatively convenient access to
+          fresh foods, rather than merely the ostensible access suggested by
+          physical proximity.</p>
+
+        <h3>Fresh-Food Access and Socioeconomic Advantage</h3>
+        <!--Tract map-->
+        <div id="map-container" class="map-container" style="height: 548px">
+          <iframe src="./tracts_2.html" frameborder="0" style="border:0" width=800 height=548 scrolling=no></iframe>
+        </div>
+        <p><br>I also visualize market locations against three markers of
+          socioeconomic (dis)advantage at the Census Tract level: median
+          income, racial composition (specifically, the percentage of tract
+          residents identifying as nonwhite in 2014-2018 American Community
+          Survey estimates), and median age. Though this illustration is merely
+          suggestive of the dynamics underpinning disparities in food access,
+          the concentration of markets in wealthy, largely white areas within
+          the city is clearly visible.</p>
+
+        <small>
+          <h4><i>Data Sources</i></h4>
+
+          <b>Location of NYC Grocery Stores, obtained via Open Street Map Overpass API</b>
+          <ul>
+            <li>API Base URL: http://overpass-api.de/api/interpreter?</li>
+            <li>Documentation: https://openrouteservice.org</li>
+          </ul>
+          <b>5-, 7-, and 10-minute walking isochrones for NYC grocery stores, obtained via Openrouteservice’s
+            Isochrones API</b>
+          <ul>
+            <li>API Base URL: https://api.openrouteservice.org/v2/isochrones/foot-walking</li>
+            <li>Documentation: https://openrouteservice.org/dev/#/api-docs/isochrones/get</li>
+          </ul>
+          <b>American Community Survey 5-Year Estimates, 2014 – 2018, obtained via Census Bureau API</b>
+          <ul>
+            <li>API Base URL: https://api.census.gov/data/2018/acs/acs5</li>
+            <li>Documentation: https://www.census.gov/developers/</li>
+          </ul>
+          <b>New York City Census Tracts, TIGER Shapefile, obtained from Census Bureau Geography Program</b>
+          <ul>
+            <li>Obtained From: https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html
+            </li>
+          </ul>
+          </p>
+        </small>
+      </div>
+
+    </div><!-- /.blog-post -->
+
+  </main><!-- /.container -->
+
+
+  <!-- Bootstrap core JavaScript
+    ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+  </script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/holderjs@2.9.4/holder.js"></script>
+  <script>
+    Holder.addTheme('thumb', {
+      bg: '#55595c',
+      fg: '#eceeef',
+      text: 'Thumbnail'
+    });
+  </script>
+
+
+  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="250" viewBox="0 0 200 250" preserveAspectRatio="none"
+    style="display: none; visibility: hidden; position: absolute; top: -100%; left: -100%;">
+    <defs>
+      <style type="text/css"></style>
+    </defs><text x="0" y="13"
+      style="font-weight:bold;font-size:13pt;font-family:Arial, Helvetica, Open Sans, sans-serif">Thumbnail</text>
+  </svg>
+</body>
+
+</html>
